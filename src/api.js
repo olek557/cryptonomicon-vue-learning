@@ -3,8 +3,8 @@ const API_KEY =
 
 const tickers = new Map();
 
-export function subscribeToTickerUpdates(tickerName, callback) {
-  tickers.set(tickerName, callback);
+export function subscribeToTickerUpdates(tickerName, callback, handleError) {
+  tickers.set(tickerName, { callback, handleError });
 }
 
 export function unsubscribeToTickerUpdates(tickerName) {
@@ -20,8 +20,14 @@ function getTickerData(tickerName) {
 window.tickers = tickers;
 
 setInterval(() => {
-  tickers.forEach((callback, ticker) => {
-    getTickerData(ticker).then((price) => callback(price));
+  tickers.forEach(({ callback, handleError }, ticker) => {
+    getTickerData(ticker).then((price) => {
+      if (price["Response"] === "Error") {
+        handleError();
+        return;
+      }
+      callback(price);
+    });
   });
 }, 5000);
 
